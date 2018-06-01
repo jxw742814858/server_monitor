@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zx.mapper.ServiceMapper">
+
+    <resultMap id="StatusMap" type="com.zx.entity.ServiceEntity">
+        <result column="mid" property="mid" jdbcType="INTEGER"/>
+        <result column="host" property="host" jdbcType="VARCHAR"/>
+        <result column="account" property="account" jdbcType="VARCHAR"/>
+        <result column="password" property="passwd" jdbcType="VARCHAR"/>
+        <result column="sid" property="sid" jdbcType="INTEGER"/>
+        <result column="service_name" property="service_name" jdbcType="VARCHAR"/>
+        <result column="process_name" property="process_name" jdbcType="VARCHAR"/>
+        <result column="path" property="path" jdbcType="VARCHAR"/>
+        <result column="depict" property="depict" jdbcType="VARCHAR"/>
+        <result column="cmad_start" property="cmad_start" jdbcType="VARCHAR"/>
+        <result column="cmad_restart" property="cmad_restart" jdbcType="VARCHAR"/>
+        <result column="cmad_stop" property="cmad_stop" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="MachineMap" type="com.zx.entity.MachineEntity">
+        <result column="mid" property="mid" jdbcType="INTEGER"/>
+        <result column="host" property="host" jdbcType="VARCHAR"/>
+        <result column="account" property="account" jdbcType="VARCHAR"/>
+        <result column="password" property="passwd" jdbcType="VARCHAR"/>
+        <result column="area" property="area" jdbcType="VARCHAR"/>
+        <result column="type" property="type" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="create_time" property="create_time" jdbcType="DATE"/>
+        <result column="ban_time" property="ban_time" jdbcType="DATE"/>
+    </resultMap>
+
+    <resultMap id="ServiceMap" type="com.zx.entity.ServiceEntity">
+        <result column="sid" property="sid" jdbcType="INTEGER"/>
+        <result column="mid" property="mid" jdbcType="INTEGER"/>
+        <result column="host" property="host" jdbcType="VARCHAR"/>
+        <result column="account" property="account" jdbcType="VARCHAR"/>
+        <result column="password" property="passwd" jdbcType="VARCHAR"/>
+        <result column="service_name" property="service_name" jdbcType="VARCHAR"/>
+        <result column="process_name" property="process_name" jdbcType="VARCHAR"/>
+        <result column="path" property="path" jdbcType="VARCHAR"/>
+        <result column="depict" property="depict" jdbcType="VARCHAR"/>
+        <result column="cmad_start" property="cmad_start" jdbcType="VARCHAR"/>
+        <result column="cmad_restart" property="cmad_restart" jdbcType="VARCHAR"/>
+        <result column="cmad_stop" property="cmad_stop" jdbcType="VARCHAR"/>
+        <result column="cmad_status" property="cmad_status" jdbcType="VARCHAR"/>
+        <!--<result column="order_num" property="order_num" jdbcType="INTEGER"/>-->
+    </resultMap>
+
+    <select id="queryServList" resultMap="StatusMap">
+        select sm.mid, sm.host, sm.account, sm.password, sc.sid, sc.service_name, sc.process_name, sc.path, sc.depict,
+        sc.cmad_start, sc.cmad_restart, sc.cmad_stop from service sc
+        left join server_machine sm ON sm.mid = sc.mid
+        where sm.status = 1
+    </select>
+
+    <select id="queryServListByOrderNum" parameterType="java.lang.Integer" resultMap="StatusMap">
+        select sm.mid, sm.host, sm.account, sm.password, sc.sid, sc.service_name, sc.process_name, sc.path,
+        sc.cmad_start, sc.cmad_restart, sc.cmad_stop, sc.cmad_status from service sc
+        left join server_machine sm ON sm.mid = sc.mid
+        where sm.status = 1 and sc.order_num = #{order_num}
+    </select>
+
+    <select id="queryExctInfoBySids" parameterType="java.lang.Integer" resultMap="ServiceMap">
+        select sm.mid, sm.host, sm.account, sm.password, sc.sid, sc.service_name, sc.process_name, sc.path,
+	    sc.cmad_start, sc.cmad_restart, sc.cmad_stop, sc.cmad_status from service sc
+	    left join server_machine sm ON sm.mid = sc.mid
+        where sm.status = 1 and sc.sid in
+        <foreach item="item" index="index" collection="array"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <insert id="addMachine" parameterType="com.zx.entity.MachineEntity">
+        insert server_machine (host, account, password, area, type, status, create_time, ban_time)
+        values (#{host}, #{account}, #{passwd}, #{area}, #{type}, #{status}, NOW(), null)
+    </insert>
+
+    <insert id="addService" parameterType="com.zx.entity.ServiceEntity">
+        insert service (mid, service_name, process_name, path, depict, cmad_start, cmad_restart, cmad_stop,
+        cmad_status, order_num)
+        values (#{mid}, #{service_name}, #{process_name}, #{path}, #{depict}, #{cmad_start}, #{cmad_restart},
+        #{cmad_stop}, #{cmad_status}, #{order_num})
+    </insert>
+
+    <delete id="banMachine" parameterType="java.lang.Integer">
+        update server_machine set status = 0, ban_time = now() where mid = #{mid}
+    </delete>
+
+    <delete id="delServBySid" parameterType="java.lang.Integer">
+        delete from service where sid = #{sid}
+    </delete>
+
+    <delete id="delServByMid" parameterType="java.lang.Integer">
+        delete from service where mid = #{mid}
+    </delete>
+
+    <update id="editService" parameterType="com.zx.entity.ServiceEntity">
+        update service set service_name = #{service_name}, process_name = #{process_name}, path = #{path},
+        depict = #{depict}, cmad_start = #{cmad_start}, cmad_restart = #{cmad_restart}, cmad_stop = #{cmad_stop},
+        cmad_status = #{cmad_status} where sid = #{sid}
+    </update>
+</mapper>
